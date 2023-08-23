@@ -1,0 +1,54 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - apt-get update
+      - apt-get install -y tar gzip unzip wget unzip git-all jq curl golang-go
+      - pip3 install checkov
+      - git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
+      - echo 'export PATH="$$HOME/.tfenv/bin:$$PATH"' >> ~/.bash_profile
+      - wget https://github.com/gitleaks/gitleaks/releases/download/v8.17.0/gitleaks_8.17.0_linux_x64.tar.gz
+      - tar -C /usr/local/bin/ -zxvf gitleaks_8.17.0_linux_x64.tar.gz gitleaks
+      - rm gitleaks_8.17.0_linux_x64.tar.gz
+      - pip3 install pre-commit
+      - git init
+      - pre-commit install
+      - pre-commit install-hooks
+      - curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+      - curl -sSLo ./terraform-docs.tar.gz https://terraform-docs.io/dl/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
+      - tar -xzf terraform-docs.tar.gz
+      - chmod +x terraform-docs
+      - mv terraform-docs /usr/local/bin/
+      - rm terraform-docs.tar.gz
+
+  pre_build:
+    commands:
+      - echo Downloading Terraform...
+      - wget https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_linux_amd64.zip
+      - unzip terraform_1.4.6_linux_amd64.zip
+      - mv terraform /usr/local/bin/
+      - rm terraform_1.4.6_linux_amd64.zip
+      - terraform --version
+      - git --version
+      - go version
+      - echo Preparing to unzip Terraform files...
+
+  build:
+    commands:
+      - echo Build started on `date`
+      - ls -la
+      - git add .
+      - pre-commit run --all-files
+
+artifacts:
+  files:
+    - '**/*'
+  discard-paths: no
+  secondary-artifacts:
+    SecondaryArtifact:
+      files:
+        - '**/*.yml'
+        - '**/*.tar.gz'

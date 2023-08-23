@@ -1,0 +1,38 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - apt-get update
+      - apt-get install -y tar gzip unzip wget unzip
+
+  pre_build:
+    commands:
+      - echo Downloading Terraform...
+      - wget https://releases.hashicorp.com/terraform/1.4.6/terraform_1.4.6_linux_amd64.zip
+      - unzip terraform_1.4.6_linux_amd64.zip
+      - mv terraform /usr/local/bin/
+      - rm terraform_1.4.6_linux_amd64.zip
+      - terraform --version
+      - echo Preparing to unzip Terraform files...
+
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Unzipping Terraform files...
+      - for i in *.tar.gz; do tar -xvzf "$i"; done
+      - echo Files have been unzipped.
+      - ls -la
+      - terraform plan
+
+artifacts:
+  files:
+    - '**/*'
+  discard-paths: no
+  secondary-artifacts:
+    SecondaryArtifact:
+      files:
+        - '**/*.yml'
+        - '**/*.tar.gz'
